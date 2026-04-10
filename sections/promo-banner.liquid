@@ -1,8 +1,11 @@
+{%- liquid
+  assign text_position_1 = section.settings.text_position_1
+  assign text_position_2 = section.settings.text_position_2
+-%}
+
 <div
   class="promo-banner section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}"
   style="
-    --promo-banner-gap: 30px;
-    --promo-banner-radius: 10px;
     padding-top: {{ section.settings.padding_top }}px;
     padding-bottom: {{ section.settings.padding_bottom }}px;
   "
@@ -11,20 +14,31 @@
 
     {%- for i in (1..2) -%}
       {%- liquid
-        assign image_key       = 'image_' | append: i
-        assign subtitle_key    = 'subtitle_' | append: i
-        assign title_key       = 'title_' | append: i
-        assign button_text_key = 'button_text_' | append: i
-        assign button_url_key  = 'button_url_' | append: i
+        assign image_key         = 'image_' | append: i
+        assign subtitle_key      = 'subtitle_' | append: i
+        assign title_key         = 'title_' | append: i
+        assign button_text_key   = 'button_text_' | append: i
+        assign button_url_key    = 'button_url_' | append: i
+        assign text_position_key = 'text_position_' | append: i
+        assign text_color_key    = 'text_color_' | append: i
 
-        assign panel_image       = section.settings[image_key]
-        assign panel_subtitle    = section.settings[subtitle_key]
-        assign panel_title       = section.settings[title_key]
-        assign panel_button_text = section.settings[button_text_key]
-        assign panel_button_url  = section.settings[button_url_key]
+        assign panel_image         = section.settings[image_key]
+        assign panel_subtitle      = section.settings[subtitle_key]
+        assign panel_title         = section.settings[title_key]
+        assign panel_button_text   = section.settings[button_text_key]
+        assign panel_button_url    = section.settings[button_url_key]
+        assign panel_text_position = section.settings[text_position_key]
+        assign panel_text_color    = section.settings[text_color_key]
+
+        assign panel_class = 'promo-banner__panel promo-banner__panel--' | append: i
+        if panel_text_position == 'top'
+          assign panel_class = panel_class | append: ' promo-banner__panel--text-top'
+        else
+          assign panel_class = panel_class | append: ' promo-banner__panel--text-bottom'
+        endif
       -%}
 
-      <div class="promo-banner__panel">
+      <div class="{{ panel_class }}" style="--panel-text-color: {{ panel_text_color }};">
 
         {%- if panel_image != blank -%}
           {{
@@ -34,7 +48,7 @@
               class: 'promo-banner__image',
               loading: 'lazy',
               widths: '375, 550, 750, 1100',
-              sizes: '(min-width: 750px) 50vw, 100vw'
+              sizes: '(min-width: 750px) 66vw, 100vw'
           }}
         {%- else -%}
           <div class="promo-banner__image promo-banner__image--placeholder">
@@ -45,13 +59,14 @@
         <div class="promo-banner__overlay"></div>
 
         <div class="promo-banner__content">
-          {%- if panel_subtitle != blank -%}
-            <p class="promo-banner__subtitle">{{ panel_subtitle }}</p>
-          {%- endif -%}
-
-          {%- if panel_title != blank -%}
-            <h2 class="promo-banner__title">{{ panel_title }}</h2>
-          {%- endif -%}
+          <div class="promo-banner__text">
+            {%- if panel_subtitle != blank -%}
+              <p class="promo-banner__subtitle">{{ panel_subtitle }}</p>
+            {%- endif -%}
+            {%- if panel_title != blank -%}
+              <h2 class="promo-banner__title">{{ panel_title }}</h2>
+            {%- endif -%}
+          </div>
 
           {%- if panel_button_text != blank -%}
             <a
@@ -70,29 +85,36 @@
 </div>
 
 {% stylesheet %}
+  /* ── Grid ── */
   .promo-banner__grid {
     display: flex;
     flex-direction: column;
-    gap: var(--promo-banner-gap);
+    gap: 30px;
   }
 
   @media screen and (min-width: 750px) {
     .promo-banner__grid {
       flex-direction: row;
-    }
-
-    .promo-banner__panel {
-      flex: 1 1 0;
+      align-items: stretch;
     }
   }
 
+  /* ── Panel sizing — matches Figma 580 : 1116 ratio ── */
+  .promo-banner__panel--1 {
+    flex: 580;
+  }
+
+  .promo-banner__panel--2 {
+    flex: 1116;
+  }
+
+  /* ── Panel base ── */
   .promo-banner__panel {
     position: relative;
     overflow: hidden;
-    border-radius: var(--promo-banner-radius);
+    border-radius: 10px;
     min-height: 420px;
     display: flex;
-    align-items: flex-end;
   }
 
   @media screen and (min-width: 750px) {
@@ -101,6 +123,7 @@
     }
   }
 
+  /* ── Background image ── */
   .promo-banner__image {
     position: absolute;
     inset: 0;
@@ -120,37 +143,73 @@
     object-fit: cover;
   }
 
+  /* ── Gradient overlay ── */
   .promo-banner__overlay {
     position: absolute;
     inset: 0;
+    pointer-events: none;
+  }
+
+  /* Left panel: lighter gradient from bottom only */
+  .promo-banner__panel--1 .promo-banner__overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 64%,
+      rgba(0, 0, 0, 0.3) 116%
+    );
+  }
+
+  /* Right panel: gradient starts earlier (40%) */
+  .promo-banner__panel--2 .promo-banner__overlay {
     background: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 40%,
       rgba(0, 0, 0, 0.45) 100%
     );
-    pointer-events: none;
   }
 
+  /* ── Content wrapper ── */
   .promo-banner__content {
     position: relative;
     z-index: 1;
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 10px;
     padding: 32px 24px;
+    gap: 10px;
+    color: var(--panel-text-color, #ffffff);
   }
 
+  /* Left panel: text top, button pushed to bottom */
+  .promo-banner__panel--text-top .promo-banner__content {
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Right panel: everything at the bottom */
+  .promo-banner__panel--text-bottom .promo-banner__content {
+    justify-content: flex-end;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* ── Text group ── */
+  .promo-banner__text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Subtitle ── */
   .promo-banner__subtitle {
     margin: 0;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
     font-size: 22px;
     line-height: 1.2;
-    color: #ffffff;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    color: inherit;
   }
 
   @media screen and (min-width: 750px) {
@@ -160,15 +219,15 @@
     }
   }
 
+  /* ── Title ── */
   .promo-banner__title {
     margin: 0;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
-    font-size: 36px;
+    font-size: 32px;
     line-height: 1.2;
-    color: #ffffff;
+    color: inherit;
     text-transform: uppercase;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   }
 
   @media screen and (min-width: 750px) {
@@ -178,11 +237,11 @@
     }
   }
 
+  /* ── Button ── */
   .promo-banner__button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-top: 8px;
     padding: 18px 32px;
     background-color: #ffffff;
     color: #4a4a4a;
@@ -190,10 +249,11 @@
     font-weight: 700;
     font-size: 18px;
     line-height: 1.2;
-    border-radius: var(--promo-banner-radius);
+    border-radius: 10px;
     text-decoration: none;
     white-space: nowrap;
     transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
   }
 
   .promo-banner__button:hover {
@@ -226,7 +286,7 @@
     },
     {
       "type": "header",
-      "content": "Panel 1"
+      "content": "Panel 1 (narrow — left)"
     },
     {
       "type": "image_picker",
@@ -246,6 +306,22 @@
       "default": "Sale is Live"
     },
     {
+      "type": "select",
+      "id": "text_position_1",
+      "label": "Text position",
+      "options": [
+        { "value": "top", "label": "Top" },
+        { "value": "bottom", "label": "Bottom" }
+      ],
+      "default": "top"
+    },
+    {
+      "type": "color",
+      "id": "text_color_1",
+      "label": "Text color",
+      "default": "#4a4a4a"
+    },
+    {
       "type": "text",
       "id": "button_text_1",
       "label": "Button label",
@@ -258,7 +334,7 @@
     },
     {
       "type": "header",
-      "content": "Panel 2"
+      "content": "Panel 2 (wide — right)"
     },
     {
       "type": "image_picker",
@@ -276,6 +352,22 @@
       "id": "title_2",
       "label": "Title",
       "default": "New Arrival"
+    },
+    {
+      "type": "select",
+      "id": "text_position_2",
+      "label": "Text position",
+      "options": [
+        { "value": "top", "label": "Top" },
+        { "value": "bottom", "label": "Bottom" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "type": "color",
+      "id": "text_color_2",
+      "label": "Text color",
+      "default": "#ffffff"
     },
     {
       "type": "text",
