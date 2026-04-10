@@ -1,8 +1,3 @@
-{%- liquid
-  assign text_position_1 = section.settings.text_position_1
-  assign text_position_2 = section.settings.text_position_2
--%}
-
 <div
   class="promo-banner section section--{{ section.settings.section_width }} color-{{ section.settings.color_scheme }}"
   style="
@@ -14,31 +9,31 @@
 
     {%- for i in (1..2) -%}
       {%- liquid
-        assign image_key         = 'image_' | append: i
-        assign subtitle_key      = 'subtitle_' | append: i
-        assign title_key         = 'title_' | append: i
-        assign button_text_key   = 'button_text_' | append: i
-        assign button_url_key    = 'button_url_' | append: i
+        assign image_key        = 'image_' | append: i
+        assign subtitle_key     = 'subtitle_' | append: i
+        assign title_key        = 'title_' | append: i
+        assign button_text_key  = 'button_text_' | append: i
+        assign button_url_key   = 'button_url_' | append: i
+        assign text_color_key   = 'text_color_' | append: i
         assign text_position_key = 'text_position_' | append: i
-        assign text_color_key    = 'text_color_' | append: i
+        assign panel_style_key  = 'panel_style_' | append: i
+        assign bg_color_key     = 'panel_bg_color_' | append: i
 
-        assign panel_image         = section.settings[image_key]
-        assign panel_subtitle      = section.settings[subtitle_key]
-        assign panel_title         = section.settings[title_key]
-        assign panel_button_text   = section.settings[button_text_key]
-        assign panel_button_url    = section.settings[button_url_key]
-        assign panel_text_position = section.settings[text_position_key]
-        assign panel_text_color    = section.settings[text_color_key]
-
-        assign panel_class = 'promo-banner__panel promo-banner__panel--' | append: i
-        if panel_text_position == 'top'
-          assign panel_class = panel_class | append: ' promo-banner__panel--text-top'
-        else
-          assign panel_class = panel_class | append: ' promo-banner__panel--text-bottom'
-        endif
+        assign panel_image        = section.settings[image_key]
+        assign panel_subtitle     = section.settings[subtitle_key]
+        assign panel_title        = section.settings[title_key]
+        assign panel_button_text  = section.settings[button_text_key]
+        assign panel_button_url   = section.settings[button_url_key]
+        assign panel_text_color   = section.settings[text_color_key]
+        assign panel_text_pos     = section.settings[text_position_key]
+        assign panel_style        = section.settings[panel_style_key]
+        assign panel_bg_color     = section.settings[bg_color_key]
       -%}
 
-      <div class="{{ panel_class }}" style="--panel-text-color: {{ panel_text_color }};">
+      <div
+        class="promo-banner__panel promo-banner__panel--{{ i }} promo-banner__panel--{{ panel_style }}"
+        style="--panel-text-color: {{ panel_text_color }}; background-color: {{ panel_bg_color }};"
+      >
 
         {%- if panel_image != blank -%}
           {{
@@ -48,7 +43,7 @@
               class: 'promo-banner__image',
               loading: 'lazy',
               widths: '375, 550, 750, 1100',
-              sizes: '(min-width: 750px) 66vw, 100vw'
+              sizes: '(min-width: 750px) 50vw, 100vw'
           }}
         {%- else -%}
           <div class="promo-banner__image promo-banner__image--placeholder">
@@ -56,10 +51,14 @@
           </div>
         {%- endif -%}
 
-        <div class="promo-banner__overlay"></div>
+        {%- if panel_style == 'full-bleed' -%}
+          <div class="promo-banner__overlay promo-banner__overlay--full"></div>
+        {%- else -%}
+          <div class="promo-banner__overlay promo-banner__overlay--bottom"></div>
+        {%- endif -%}
 
-        <div class="promo-banner__content">
-          <div class="promo-banner__text">
+        {%- if panel_subtitle != blank or panel_title != blank -%}
+          <div class="promo-banner__text-group promo-banner__text-group--{{ panel_text_pos }}">
             {%- if panel_subtitle != blank -%}
               <p class="promo-banner__subtitle">{{ panel_subtitle }}</p>
             {%- endif -%}
@@ -67,16 +66,15 @@
               <h2 class="promo-banner__title">{{ panel_title }}</h2>
             {%- endif -%}
           </div>
+        {%- endif -%}
 
-          {%- if panel_button_text != blank -%}
-            <a
-              href="{{ panel_button_url | default: '#' }}"
-              class="promo-banner__button"
-            >
+        {%- if panel_button_text != blank -%}
+          <div class="promo-banner__actions">
+            <a href="{{ panel_button_url | default: '#' }}" class="promo-banner__button">
               {{ panel_button_text }}
             </a>
-          {%- endif -%}
-        </div>
+          </div>
+        {%- endif -%}
 
       </div>
     {%- endfor -%}
@@ -85,6 +83,7 @@
 </div>
 
 {% stylesheet %}
+
   /* ── Grid ── */
   .promo-banner__grid {
     display: flex;
@@ -99,14 +98,9 @@
     }
   }
 
-  /* ── Panel sizing — matches Figma 580 : 1116 ratio ── */
-  .promo-banner__panel--1 {
-    flex: 580;
-  }
-
-  .promo-banner__panel--2 {
-    flex: 1116;
-  }
+  /* ── Column widths — Figma ratio 580 : 1116 ── */
+  .promo-banner__panel--1 { flex: 580; }
+  .promo-banner__panel--2 { flex: 1116; }
 
   /* ── Panel base ── */
   .promo-banner__panel {
@@ -114,7 +108,6 @@
     overflow: hidden;
     border-radius: 10px;
     min-height: 420px;
-    display: flex;
   }
 
   @media screen and (min-width: 750px) {
@@ -130,37 +123,40 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: top center;
     display: block;
   }
 
   .promo-banner__image--placeholder {
     background: #e8e8e8;
+    position: absolute;
+    inset: 0;
   }
 
   .promo-banner__image--placeholder .placeholder-svg {
     width: 100%;
     height: 100%;
-    object-fit: cover;
   }
 
-  /* ── Gradient overlay ── */
+  /* ── Overlays ── */
   .promo-banner__overlay {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    z-index: 1;
   }
 
-  /* Left panel: lighter gradient from bottom only */
-  .promo-banner__panel--1 .promo-banner__overlay {
+  /* Left panel: subtle bottom-only gradient so button stays readable */
+  .promo-banner__overlay--bottom {
     background: linear-gradient(
       to bottom,
-      rgba(0, 0, 0, 0) 64%,
-      rgba(0, 0, 0, 0.3) 116%
+      rgba(0, 0, 0, 0) 60%,
+      rgba(0, 0, 0, 0.18) 100%
     );
   }
 
-  /* Right panel: gradient starts earlier (40%) */
-  .promo-banner__panel--2 .promo-banner__overlay {
+  /* Right panel: full dark gradient from 40% */
+  .promo-banner__overlay--full {
     background: linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 40%,
@@ -168,38 +164,28 @@
     );
   }
 
-  /* ── Content wrapper ── */
-  .promo-banner__content {
-    position: relative;
-    z-index: 1;
-    width: 100%;
+  /* ── Text group — absolutely positioned ── */
+  .promo-banner__text-group {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    padding: 32px 24px;
+    align-items: center;
+    text-align: center;
     gap: 10px;
     color: var(--panel-text-color, #ffffff);
   }
 
-  /* Left panel: text top, button pushed to bottom */
-  .promo-banner__panel--text-top .promo-banner__content {
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
+  /* Text at top */
+  .promo-banner__text-group--top {
+    top: 32px;
   }
 
-  /* Right panel: everything at the bottom */
-  .promo-banner__panel--text-bottom .promo-banner__content {
-    justify-content: flex-end;
-    align-items: center;
-    text-align: center;
-  }
-
-  /* ── Text group ── */
-  .promo-banner__text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+  /* Text at bottom — sits above the button (button ~56px + 32px gap + 16px spacing = ~104px) */
+  .promo-banner__text-group--bottom {
+    bottom: 110px;
   }
 
   /* ── Subtitle ── */
@@ -215,7 +201,6 @@
   @media screen and (min-width: 750px) {
     .promo-banner__subtitle {
       font-size: 32px;
-      line-height: 1.2;
     }
   }
 
@@ -226,18 +211,27 @@
     font-weight: 700;
     font-size: 32px;
     line-height: 1.2;
-    color: inherit;
     text-transform: uppercase;
+    color: inherit;
   }
 
   @media screen and (min-width: 750px) {
     .promo-banner__title {
       font-size: 48px;
-      line-height: 1.2;
     }
   }
 
-  /* ── Button ── */
+  /* ── Button row — absolutely at bottom ── */
+  .promo-banner__actions {
+    position: absolute;
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+  }
+
   .promo-banner__button {
     display: inline-flex;
     align-items: center;
@@ -253,13 +247,13 @@
     text-decoration: none;
     white-space: nowrap;
     transition: background-color 0.2s ease, color 0.2s ease;
-    flex-shrink: 0;
   }
 
   .promo-banner__button:hover {
     background-color: #4a4a4a;
     color: #ffffff;
   }
+
 {% endstylesheet %}
 
 {% schema %}
@@ -286,12 +280,29 @@
     },
     {
       "type": "header",
-      "content": "Panel 1 (narrow — left)"
+      "content": "Panel 1 — Left (narrow)"
+    },
+    {
+      "type": "select",
+      "id": "panel_style_1",
+      "label": "Image style",
+      "info": "Portrait: light background, text on top. Full-bleed: dark overlay, text over image.",
+      "options": [
+        { "value": "portrait", "label": "Portrait (light)" },
+        { "value": "full-bleed", "label": "Full-bleed (dark overlay)" }
+      ],
+      "default": "portrait"
+    },
+    {
+      "type": "color",
+      "id": "panel_bg_color_1",
+      "label": "Panel background color",
+      "default": "#f2ede8"
     },
     {
       "type": "image_picker",
       "id": "image_1",
-      "label": "Background image"
+      "label": "Image"
     },
     {
       "type": "text",
@@ -334,12 +345,28 @@
     },
     {
       "type": "header",
-      "content": "Panel 2 (wide — right)"
+      "content": "Panel 2 — Right (wide)"
+    },
+    {
+      "type": "select",
+      "id": "panel_style_2",
+      "label": "Image style",
+      "options": [
+        { "value": "portrait", "label": "Portrait (light)" },
+        { "value": "full-bleed", "label": "Full-bleed (dark overlay)" }
+      ],
+      "default": "full-bleed"
+    },
+    {
+      "type": "color",
+      "id": "panel_bg_color_2",
+      "label": "Panel background color",
+      "default": "#1a1a1a"
     },
     {
       "type": "image_picker",
       "id": "image_2",
-      "label": "Background image"
+      "label": "Image"
     },
     {
       "type": "text",
